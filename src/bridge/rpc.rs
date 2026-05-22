@@ -120,21 +120,24 @@ impl BtcRpcClient {
 // Integration tests — require a live Bitcoin Core regtest node.
 //
 // Start node:
-//   bitcoind -regtest -rpcuser=heritage -rpcpassword=tageroot2024 -rpcport=18443 \
+//   bitcoind -regtest -rpcuser=<user> -rpcpassword=<pass> -rpcport=18443 \
 //            -txindex=1 -daemon
-//   bitcoin-cli -regtest -rpcuser=heritage -rpcpassword=tageroot2024 \
+//   bitcoin-cli -regtest -rpcuser=<user> -rpcpassword=<pass> \
 //            -rpcport=18443 createwallet tage
-//   bitcoin-cli -regtest -rpcuser=heritage -rpcpassword=tageroot2024 \
+//   bitcoin-cli -regtest -rpcuser=<user> -rpcpassword=<pass> \
 //            -rpcport=18443 -generate 101
 //
-// Run with:  cargo test -- --ignored
+// Set env vars: BITCOIN_RPC_USER=<user> BITCOIN_RPC_PASS=<pass>
+// Run with:     cargo test -- --ignored
 // =============================================================================
 #[cfg(test)]
 mod integration {
     use super::*;
 
     fn regtest_client() -> BtcRpcClient {
-        BtcRpcClient::new("http://127.0.0.1:18443", "heritage", "tageroot2024")
+        let user = std::env::var("BITCOIN_RPC_USER").expect("BITCOIN_RPC_USER must be set");
+        let pass = std::env::var("BITCOIN_RPC_PASS").expect("BITCOIN_RPC_PASS must be set");
+        BtcRpcClient::new("http://127.0.0.1:18443", &user, &pass)
             .expect("connect to regtest node — start bitcoind first (see comment above)")
     }
 

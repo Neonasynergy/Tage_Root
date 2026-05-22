@@ -6,6 +6,7 @@
 // Supports bridge operator, validator, and yield engine roles.
 
 use std::env;
+use std::io::{self, Write};
 use tage::bridge::daemon::{BridgeDaemon, BridgeDaemonConfig};
 use tage::bridge::peg_in::PegInManager;
 use tage::bridge::peg_out::{PegOutManager, PegOutRequest, PEG_OUT_CONFIRMATION_DEPTH};
@@ -86,16 +87,33 @@ fn run_yield_engine() -> Result<()> {
     )?;
     daemon.run()
 }
+fn prompt_rpc_user() -> Result<String> {
+    if let Ok(val) = std::env::var("BITCOIN_RPC_USER") {
+        return Ok(val);
+    }
+    print!("Bitcoin RPC username: ");
+    io::stdout().flush()?;
+    let mut user = String::new();
+    io::stdin().read_line(&mut user)?;
+    Ok(user.trim().to_string())
+}
+
+fn prompt_rpc_pass() -> Result<String> {
+    if let Ok(val) = std::env::var("BITCOIN_RPC_PASS") {
+        return Ok(val);
+    }
+    let pass = rpassword::prompt_password("Bitcoin RPC password: ")?;
+    Ok(pass)
+}
+
 fn run_demo() -> Result<()> {
     println!("Running Tage end-to-end demo (live regtest node)...");
 
     // ── Connect to the live Bitcoin Core regtest node ─────────────────────────
     let rpc_url = std::env::var("BITCOIN_RPC_URL")
         .unwrap_or_else(|_| "http://127.0.0.1:18443".into());
-    let rpc_user = std::env::var("BITCOIN_RPC_USER")
-        .unwrap_or_else(|_| "heritage".into());
-    let rpc_pass = std::env::var("BITCOIN_RPC_PASS")
-        .unwrap_or_else(|_| "tageroot2024".into());
+    let rpc_user = prompt_rpc_user()?;
+    let rpc_pass = prompt_rpc_pass()?;
 
     let rpc = BtcRpcClient::new(&rpc_url, &rpc_user, &rpc_pass)?;
     let chain_tip = rpc.get_block_count()?;
